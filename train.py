@@ -16,10 +16,12 @@ sess = tf.Session(graph=graph)
 
 net = RnnNet(config, graph)
 
-wps = ["a"]
+wps = ["a", "b"]
 
 for wp in wps:
     net.build_wp(wp)
+
+net.build_sp()
 
 net.init_weights(sess)
 
@@ -32,19 +34,29 @@ def generate_random_input():
     return input, labels, mask, seq_len
 
 
-# for wp in wps:
-#     for epoch in range(EPOCHS):
-#         input, labels, mask, seq_len = generate_random_input()
-#         state = net.zero_wp_state(wp, BS)
-#         state, sse, returns = net.fit_wp(sess, wp, state, input, labels, mask, seq_len)
-#         print("%s %d %.2f" % (wp, epoch, sse))
-#     net.save_wp(sess, wp, EPOCHS)
-#
-# net.save_graph(graph)
+for wp in wps:
+    for epoch in range(EPOCHS):
+        input, labels, mask, seq_len = generate_random_input()
+        state = net.zero_wp_state(wp, BS)
+        state, sse, returns = net.fit_wp(sess, wp, state, input, labels, mask, seq_len)
+        print("%s %d %.2f" % (wp, epoch, sse))
+    net.save_wp(sess, wp, EPOCHS)
+
+net.save_graph(graph)
 
 for wp in wps:
     net.load_wp(sess, wp, EPOCHS)
+
+for eval_iter in range(100):
+    for wp in wps:
+        input, labels, mask, seq_len = generate_random_input()
+        state = net.zero_wp_state(wp, BS)
+        new_state, sse, returns = net.eval_wp(sess, wp, state, input, labels, mask, seq_len)
+        print("Eval %s %.2f" % (wp, sse))
+
+    states = {}
     input, labels, mask, seq_len = generate_random_input()
-    state = net.zero_wp_state(wp, BS)
-    new_state, sse, returns = net.eval_wp(sess, wp, state, input, labels, mask, seq_len)
-    print("Eval %s %.2f" % (wp, sse))
+    for wp in wps:
+        states[wp] = net.zero_wp_state(wp, BS)
+    sse, returns = net.eval_ma(sess, states, input, labels, mask, seq_len)
+    print("MA eval %.2f" % (sse))

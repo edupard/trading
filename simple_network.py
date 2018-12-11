@@ -44,6 +44,17 @@ class RnnNet(object):
         self.saver = {}
         self.train = {}
 
+    def build_sp(self):
+        returns_list = []
+        for k, v in self.returns.items():
+            returns_list.append(v)
+
+        with self.graph.as_default() as graph:
+            with tf.variable_scope("model_averaging") as scope:
+                self.ma_returns = ma_returns = tf.add_n(returns_list) / len(returns_list)
+                diff = ma_returns - tf.expand_dims(self.labels, 2)
+                self.ma_sse = ma_sse = tf.reduce_sum(tf.multiply(tf.square(diff), tf.expand_dims(self.mask, 2)))
+
     def build_wp(self, id):
         print('creating %s weak predictor network...' % id)
         with self.graph.as_default() as graph:
@@ -105,7 +116,7 @@ class RnnNet(object):
             zero_state += (tf.contrib.rnn.LSTMStateTuple(c, h),)
         return zero_state
 
-    def _fill_feed_dict(self, id, feed_dict, state):
+    def _fill_state(self, id, feed_dict, state):
         idx = 0
         for s in state:
             feed_dict[self.state[id][idx].c] = s.c
@@ -115,15 +126,26 @@ class RnnNet(object):
     def eval_wp(self, sess, id, state, input, labels, mask, seq_len):
         feed_dict = {self.input: input, self.labels: labels, self.mask: mask, self.keep_prob: 1.0,
                      self.seq_len: seq_len}
-        self._fill_feed_dict(id, feed_dict, state)
+        self._fill_state(id, feed_dict, state)
 
         new_state, sse, returns = sess.run((self.new_state[id], self.sse[id], self.returns[id]), feed_dict)
         return new_state, sse, returns
 
+    def eval_ma(self, sess, states, input, labels, mask, seq_len):
+        feed_dict = {self.input: input, self.labels: labels, self.mask: mask, self.keep_prob: 1.0,
+                     self.seq_len: seq_len}
+        for k,v in states.items():
+            self._fill_state(k, feed_dict, v)
+
+        # TODO: eval new state for each weak predictor
+        # do state management internally, expose state reset methods only
+        sse, returns = sess.run((self.ma_sse, self.ma_returns), feed_dict)
+        return sse, returns
+
     def fit_wp(self, sess, id, state, input, labels, mask, seq_len):
         feed_dict = {self.input: input, self.labels: labels, self.mask: mask,
                      self.keep_prob: self.config.DROPOUT_KEEP_RATE, self.seq_len: seq_len}
-        self._fill_feed_dict(id, feed_dict, state)
+        self._fill_state(id, feed_dict, state)
         new_state, sse, returns, _ = sess.run((self.new_state[id], self.sse[id], self.returns[id], self.train[id]), feed_dict)
         return new_state, sse, returns
 
