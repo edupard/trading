@@ -26,28 +26,50 @@ def load_data(yyyymmdd):
     # aggregate seconds
     data = np.zeros([2, SECONDS_IN_DAY])
 
-    gross_amount = np.zeros([SECONDS_IN_DAY])
-    gross_volume = np.zeros([SECONDS_IN_DAY])
-    avg_px = np.zeros([SECONDS_IN_DAY])
+    amount = np.zeros([SECONDS_IN_DAY])
+    vol = np.zeros([SECONDS_IN_DAY])
+    px = np.zeros([SECONDS_IN_DAY])
 
     time = csv_content[:, 1]
     h, m, s = hms(time)
     idx = s + m * 60 + h * 3600
     idx = idx.astype(dtype=np.int)
 
-    vol = csv_content[:, 3]
-    px = csv_content[:, 2]
-    amount = vol * px
+    tr_vol = csv_content[:, 3]
+    tr_px = csv_content[:, 2]
+    tr_amount = tr_vol * tr_px
 
-    np.add.at(gross_volume, idx, vol)
-    np.add.at(gross_amount, idx, amount)
+    np.add.at(vol, idx, tr_vol)
+    np.add.at(amount, idx, tr_amount)
 
-    non_zero_idx = np.nonzero(gross_amount)
+    non_zero_idx = np.nonzero(amount)
 
-    avg_px[non_zero_idx] = gross_amount[non_zero_idx] / gross_volume[non_zero_idx]
+    px[non_zero_idx] = amount[non_zero_idx] / vol[non_zero_idx]
 
-    data[0, :] = avg_px
-    data[1, :] = gross_volume
+    data[0, :] = px
+    data[1, :] = vol
+
+    # now we need to normalize volume
+    # do exponential moving average
+    # https://en.wikipedia.org/wiki/Moving_average
+
+    # do ema with quiet high speed - need to forget high volumes quickly
+    # ie we need to be sensitive to quick changes
+    # so we have smooth non zero curve
+    # then we need to feed in % change for this curve to get 0 mean input
+    # plot graphs so i can pick ema factor properly
+
+    # prices
+    # first - fill in gaps
+
+    # no reason to do ema for prices:
+    # a) you need to see price changes immediatelly
+    # b) NN can derieve ema if it needs
+    # c) EMA is reversible
+    # d) volumes are just tricky because you need to normalize
+    # e) feed in % change to get 0 mean input
+
+
     return data
 
 
