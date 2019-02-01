@@ -13,6 +13,17 @@ SECONDS_IN_DAY = 24 * 60 * 60
 
 TEST_IDX = 0 + 0 * 60 + 10 * 60 *60
 
+# when it close to 1 - we use most recent data
+GAMMA = 0.7
+
+
+def ema(prev_ema, value):
+    return value * GAMMA + (1-GAMMA) * prev_ema
+
+
+def roll_prev_px(next_value, value):
+    return value if value > 0 else next_value
+
 
 def load_data(yyyymmdd):
     # date, time, px, vol
@@ -48,6 +59,18 @@ def load_data(yyyymmdd):
 
     data[0, :] = px
     data[1, :] = vol
+
+    ema_ufunc = np.frompyfunc(ema, 2, 1)
+
+    ema_volume = ema_ufunc.accumulate(vol, dtype=np.object)
+
+    roll_prev_px_ufunc = np.frompyfunc(roll_prev_px, 2, 1)
+
+    rolled_px_reversed = roll_prev_px_ufunc.accumulate(px[::-1], dtype=np.object)
+    rolled_px = rolled_px_reversed[::-1]
+
+    data[0,:] = px
+    data[1,:] = vol
 
     # now we need to normalize volume
     # do exponential moving average
