@@ -14,6 +14,11 @@ def arr_ema(arr, gamma):
     return v_ema.accumulate(arr, dtype=np.object).astype(np.float)
 
 
+def arr_rema(arr, gamma):
+    intermediate = arr_ema(arr[::-1], gamma)
+    return intermediate[::-1]
+
+
 def _roll_fwd(prev, val):
     return prev if val <= 0 else val
 

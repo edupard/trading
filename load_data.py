@@ -1,4 +1,5 @@
 import numpy as np
+import preprocess
 
 
 def hms(hhmmss):
@@ -9,43 +10,15 @@ def hms(hhmmss):
     return (h, m, s)
 
 
+AVG_VOLUME_PER_SECOND = 114237.239471109
+AVG_VOLUME_PER_SECOND_STDDEV = 39145.5378031463
+
+
 SECONDS_IN_DAY = 24 * 60 * 60
 
-TEST_IDX = 0 + 0 * 60 + 10 * 60 *60
+BEG_IDX = 0 + 0 * 60 + 10 * 60 * 60
+END_IDX = 0 + 0 *60 + 19 * 60 *60 - 1
 
-GAMMA_VOLLUME = 0.1
-
-
-def f_ema_vol(prev_ema, value):
-    return value * GAMMA_VOLLUME + (1 - GAMMA_VOLLUME) * prev_ema
-
-
-_v_ema_vol = np.frompyfunc(f_ema_vol, 2, 1)
-
-GAMMA_PX = 0.98
-
-
-def f_ema_px(prev_ema, value):
-    return value * GAMMA_VOLLUME + (1 - GAMMA_VOLLUME) * prev_ema
-
-
-_v_ema_px = np.frompyfunc(f_ema_px, 2, 1)
-
-
-def roll_prev_px(next_value, value):
-    return next_value if next_value > 0 else value
-
-
-roll_prev_px_ufunc = np.frompyfunc(roll_prev_px, 2, 1)
-
-
-def _calc_pct(new, old):
-    if old != 0:
-        return (new - old) / old
-    return 0
-
-
-_v_pct = np.vectorize(_calc_pct, otypes=[np.float])
 
 def load_data(yyyymmdd):
     # date, time, px, vol
@@ -78,6 +51,24 @@ def load_data(yyyymmdd):
     non_zero_idx = np.nonzero(amount)
 
     px[non_zero_idx] = amount[non_zero_idx] / vol[non_zero_idx]
+
+    px = preprocess.roll_arr_fwd(px)
+    px = preprocess.roll_arr_bwd(px)
+
+    px_pct = preprocess.pct_chg(px)
+
+    vol_normalized = (vol - AVG_VOLUME_PER_SECOND) / AVG_VOLUME_PER_SECOND_STDDEV
+
+    px_rema = preprocess.arr_ema()
+
+    data[:, 0] = vol
+    data[:, 1] = vol_normalized
+    data[:, 2] = px
+    data[:, 3] = px_pct
+    data[:, 4] = px_rema
+
+
+
 
     ema_volume = _v_ema_vol.accumulate(vol, dtype=np.object).astype(np.float)
 
