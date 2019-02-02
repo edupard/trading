@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import preprocess
+import trading
 
 from load_data import load_data, SECONDS_IN_DAY
 
@@ -27,7 +28,17 @@ ax.plot(time, px_rema)
 ax = fig.add_subplot(4, 1, 4)
 ax.plot(time, value)
 
-state = preprocess.get_position(value, 0.00025)
-ax.plot(time, state)
+pos = trading.get_position(value, 0.00025)
+pnl = trading.get_pnl(pos, px)
+ax.plot(time, pnl)
+
+# so we have
+# volume, px
+
+# nn input
+# vol_nm, px_pct
+
+# nn output
+# px_rema
 
 plt.show(True)
