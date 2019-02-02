@@ -36,9 +36,9 @@ class TestEma(unittest.TestCase):
         np.testing.assert_almost_equal(ema, expected)
 
     def test_arr_rema_half(self):
-        arr = np.array([2.0, 1.5, 2.0, 1.0])
+        arr = np.array([1.75, 2.0, 1.5, 2.0, 1.0])
         ema = preprocess.arr_rema(arr, 0.5)
-        expected = np.array([1.75, 1.5, 1.5, 1.0])
+        expected = np.array([1.75, 1.5, 1.5, 1.0, 1.0])
         np.testing.assert_almost_equal(ema, expected)
 
     def test_roll_arr_fwd(self):
@@ -53,8 +53,38 @@ class TestEma(unittest.TestCase):
         expected = np.array([1.0, 1.0, 2.0, 3.0, 3.0, 0.0])
         np.testing.assert_almost_equal(roll_fwd_arr, expected)
 
-    def test_to_pct(self):
+    def test_pct_chg(self):
         arr = np.array([1.0, 2.0, 4.0, 2.0, 2.0, 2.2])
         pct_ch_arr = preprocess.pct_chg(arr)
         expected = np.array([0.0, 1.0, 1.0, -0.5, 0.0, 0.1])
         np.testing.assert_almost_equal(pct_ch_arr, expected)
+
+    def test_pct_diff(self):
+        prev = np.array([1.0, 1.0, 2.0, 2.0])
+        next = np.array([2.0, 1.5, 1.0, 2.0])
+        pct_ch_arr = preprocess.pct_diff(prev, next)
+        expected = np.array([1.0, 0.5, -0.5, 0.0])
+        np.testing.assert_almost_equal(pct_ch_arr, expected)
+
+    def test_new_state(self):
+        # zero
+        self.assertEqual(preprocess.new_state(0., 5.0, 1.0), 1.)
+        self.assertEqual(preprocess.new_state(0., -5.0, 1.0), -1.)
+        self.assertEqual(preprocess.new_state(0., 0.5, 1.0), 0.)
+        self.assertEqual(preprocess.new_state(0., -0.5, 1.0), 0.)
+        # long
+        self.assertEqual(preprocess.new_state(1., 5.0, 1.0), 1.)
+        self.assertEqual(preprocess.new_state(1., -5.0, 1.0), -1.)
+        self.assertEqual(preprocess.new_state(1., 0.5, 1.0), 1.)
+        self.assertEqual(preprocess.new_state(1., -0.5, 1.0), 1.)
+        # short
+        self.assertEqual(preprocess.new_state(-1., 5.0, 1.0), 1.)
+        self.assertEqual(preprocess.new_state(-1., -5.0, 1.0), -1.)
+        self.assertEqual(preprocess.new_state(-1., 0.5, 1.0), -1.)
+        self.assertEqual(preprocess.new_state(-1., -0.5, 1.0), -1.)
+
+    def test_get_state(self):
+        value = np.array([0.5, 2.0, 2.2, 0.5, -0.5, -1.5, 0.0, 0.5, 1.5])
+        state = preprocess.get_state(value, 1.0)
+        expected = np.array([0., 1., 1., 1., 1., -1., -1., -1., 1.])
+        np.testing.assert_array_equal(state, expected)
