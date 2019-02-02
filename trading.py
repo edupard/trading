@@ -21,12 +21,16 @@ def get_position(value, threshold):
     return state[1:]
 
 
-def get_pnl(pos, px):
-    # get trades array
+def get_trades(pos):
     prev_pos = np.roll(pos, 1)
     prev_pos[0] = 0.0
     trades = pos - prev_pos
+    return trades
 
+
+def get_pnl(pos, px):
+    # get trades array
+    trades = get_trades(pos)
     # cash
     cash_flow = -trades * px
     cash = np.cumsum(cash_flow)

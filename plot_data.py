@@ -32,6 +32,10 @@ pos = trading.get_position(value, 0.00025)
 pnl = trading.get_pnl(pos, px)
 ax.plot(time, pnl)
 
+trades = trading.get_trades(pos)
+volume = np.sum(np.abs(trades[np.nonzero(trades)]))
+print( "Volume : %d" % volume)
+
 # so we have
 # volume, px
 
