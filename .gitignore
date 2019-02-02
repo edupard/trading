@@ -2,3 +2,4 @@
 graph/
 weights/
 data/
+__pycache__/
