@@ -13,7 +13,7 @@ SECONDS_IN_DAY = 24 * 60 * 60
 
 TEST_IDX = 0 + 0 * 60 + 10 * 60 *60
 
-GAMMA_VOLLUME = 0.7
+GAMMA_VOLLUME = 0.1
 
 
 def f_ema_vol(prev_ema, value):
@@ -33,7 +33,7 @@ _v_ema_px = np.frompyfunc(f_ema_px, 2, 1)
 
 
 def roll_prev_px(next_value, value):
-    return value if value > 0 else next_value
+    return next_value if next_value > 0 else value
 
 
 roll_prev_px_ufunc = np.frompyfunc(roll_prev_px, 2, 1)
@@ -81,8 +81,10 @@ def load_data(yyyymmdd):
 
     ema_volume = _v_ema_vol.accumulate(vol, dtype=np.object).astype(np.float)
 
-    rolled_px_reversed = roll_prev_px_ufunc.accumulate(px[::-1], dtype=np.object).astype(np.float)
-    rolled_px = rolled_px_reversed[::-1]
+    rolled_px = roll_prev_px_ufunc.accumulate(px, dtype=np.object).astype(np.float)
+
+    #rolled_px_reversed = roll_prev_px_ufunc.accumulate(px[::-1], dtype=np.object).astype(np.float)
+    #rolled_px = rolled_px_reversed[::-1]
 
     px_ema_rev = _v_ema_px.accumulate(rolled_px[::-1], dtype=np.object).astype(np.float)
     px_ema = np.roll(px_ema_rev[::-1], -1)
@@ -125,7 +127,7 @@ def load_data(yyyymmdd):
 
 
 # h, m, s = hms(np.array([101223, 141500]))
-data = load_data(20190124)
+#data = load_data(20190124)
 
 
 
