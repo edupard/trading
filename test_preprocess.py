@@ -3,7 +3,7 @@ import preprocess
 import numpy as np
 
 
-class TestEma(unittest.TestCase):
+class PreprocessTests(unittest.TestCase):
 
     def test_one_ema(self):
         ema = preprocess.ema(1.0, 2.0, 1.0)
@@ -66,25 +66,3 @@ class TestEma(unittest.TestCase):
         expected = np.array([1.0, 0.5, -0.5, 0.0])
         np.testing.assert_almost_equal(pct_ch_arr, expected)
 
-    def test_new_state(self):
-        # zero
-        self.assertEqual(preprocess.new_state(0., 5.0, 1.0), 1.)
-        self.assertEqual(preprocess.new_state(0., -5.0, 1.0), -1.)
-        self.assertEqual(preprocess.new_state(0., 0.5, 1.0), 0.)
-        self.assertEqual(preprocess.new_state(0., -0.5, 1.0), 0.)
-        # long
-        self.assertEqual(preprocess.new_state(1., 5.0, 1.0), 1.)
-        self.assertEqual(preprocess.new_state(1., -5.0, 1.0), -1.)
-        self.assertEqual(preprocess.new_state(1., 0.5, 1.0), 1.)
-        self.assertEqual(preprocess.new_state(1., -0.5, 1.0), 1.)
-        # short
-        self.assertEqual(preprocess.new_state(-1., 5.0, 1.0), 1.)
-        self.assertEqual(preprocess.new_state(-1., -5.0, 1.0), -1.)
-        self.assertEqual(preprocess.new_state(-1., 0.5, 1.0), -1.)
-        self.assertEqual(preprocess.new_state(-1., -0.5, 1.0), -1.)
-
-    def test_get_state(self):
-        value = np.array([0.5, 2.0, 2.2, 0.5, -0.5, -1.5, 0.0, 0.5, 1.5])
-        state = preprocess.get_state(value, 1.0)
-        expected = np.array([0., 1., 1., 1., 1., -1., -1., -1., 1.])
-        np.testing.assert_array_equal(state, expected)

@@ -60,23 +60,5 @@ def pct_diff(prev, next):
     return _v_pct(prev, next)
 
 
-def new_state(state, value, threshold):
-    if value > threshold:
-        return 1.
-    elif value < -threshold:
-        return -1.
-    return state
 
-
-def get_state(value, threshold):
-
-    value = np.insert(value, 0, 0., axis=0)
-
-    def _new_state(state, value):
-        return new_state(state, value, threshold)
-
-    _v_new_state = np.frompyfunc(_new_state, 2, 1)
-
-    state = _v_new_state.accumulate(value, dtype=np.object).astype(np.float)
-    return state[1:]
 
