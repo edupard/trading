@@ -7,7 +7,7 @@ vol, vol_normalized, px, px_rema, px_pct, value = load_data(20190124, 0.03)
 
 TS = 100
 F = 2
-EPOCHS = 100
+EPOCHS = 200
 
 config = defaultRnnNetConfig()
 config.FEATURES_DIM = F
@@ -18,7 +18,7 @@ sess = tf.Session(graph=graph)
 
 net = RnnNet(config, graph)
 
-wp = "test"
+wp = "last"
 net.build_wp(wp)
 net.build_sp()
 
@@ -31,6 +31,10 @@ input[0, :, 1] = px_pct[BEG_IDX:END_IDX]
 labels = np.zeros((1, LEN), dtype=np.float32)
 labels[0,:] = value[BEG_IDX:END_IDX]
 mask = np.ones((1, LEN), np.float32)
+for k in range(99):
+    mask[0, k] = 0.0
+
+
 seq_len = np.full((1,), TS).reshape((-1,))
 
 
@@ -51,7 +55,4 @@ for epoch in range(EPOCHS):
         state, sse, returns = net.fit_wp(sess, wp, state, input[:,bi:ei,:], labels[:,bi:ei], mask[:,bi:ei], seq_len)
         print("%s %d %.8f" % (wp, epoch, sse))
 
-TODO:
-1. how many data we can fit
-2. mask, batch size
-3. what error level is acceptable -  we have original distribution
+    net.save_wp(sess, wp, epoch)

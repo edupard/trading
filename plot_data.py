@@ -36,13 +36,4 @@ trades = trading.get_trades(pos)
 volume = np.sum(np.abs(trades[np.nonzero(trades)]))
 print( "Volume : %d" % volume)
 
-# so we have
-# volume, px
-
-# nn input
-# vol_nm, px_pct
-
-# nn output
-# px_rema
-
 plt.show(True)
